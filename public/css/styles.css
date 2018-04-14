@@ -1,0 +1,120 @@
+
+html {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    height: 100%;
+    overflow: hidden;
+    color: black;
+    font-family: 'Roboto', sans-serif;
+    display: flex;
+    flex-flow: column;
+    margin: 0;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+#app {
+    flex: 1;
+    display: flex;
+    flex-flow: column;
+}
+
+.page {
+    display: flex;
+    flex: 1;
+}
+
+.page-left {
+    color: rgba(3,27,78,.6);
+    display: flex;
+    flex-flow: column;
+    width: 300px;
+}
+
+.logo {
+    font-size: 2em;
+    color: #3076f8;
+    display: flex;
+    margin-top: 10px;
+    padding-left: 30px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.page-right {
+    display: flex;
+    flex: 1;
+    flex-flow: column;
+}
+
+.toolbar {
+    display: flex;
+    color: #3076f8;
+    font-weight: 600;
+    font-size: 1.4em;
+    padding-left: 10px;
+    align-items: center;
+    height: 55px;
+}
+
+.save {
+    margin-left: auto;
+    width: 100px;
+    cursor: pointer;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.save:hover {
+    background:#f3f5f9;
+}
+
+.saved {
+    color: rgba(3,27,78,.6);
+    font-size: 0.7em;
+    padding-top: 4px;
+}
+
+.name {
+    font-size: inherit;
+    color: inherit;
+    padding: none;
+    outline: none;
+    margin-left: 5px;
+    margin-bottom: 1px;
+    padding: 0;
+    border: none;
+    background: inherit;
+    flex: 1; 
+}
+
+.input {
+    resize: none;
+    font-weight: 400;
+    border: none;
+    padding: 10px;
+    font-size: 1.8em;
+    margin-right: 0;
+    flex: 1;
+    outline: none;
+}
+
+.file {
+    cursor: pointer;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding-left: 30px;
+}
+
+.file:hover {
+    background:#f3f5f9;
+}

@@ -1,0 +1,19 @@
+# choose which image to use
+FROM node:7.7.1
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Install app dependencies
+COPY package.json .
+
+# Get dependencies
+RUN npm install
+
+# Get source code
+COPY . .
+
+# Build webpack bundle
+RUN node node_modules/webpack/bin/webpack.js
+
+CMD [ "node", "server/server.js"]
