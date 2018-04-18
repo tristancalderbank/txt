@@ -56,7 +56,15 @@ app.get('/files/:name', (req, res) => {
     res.sendFile(`${dataDir}/${req.params.name}.txt`);
 });
 
+app.get('/favicon.ico', (req, res) => {
+    console.log('YO');
+    res.sendFile('favicon.ico', {
+        root: `${__dirname}/../public/`
+    });
+});
+
 app.get(/.*/, (req, res) => {
+    console.log(req.url);
     res.sendFile('index.html', {
         root: `${__dirname}/../public`
     });

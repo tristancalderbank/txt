@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Scrollbars from 'react-custom-scrollbars';
 
 class App extends Component {
     constructor(props) {
@@ -8,11 +9,14 @@ class App extends Component {
             text: '',
             saving: false,
             saved: false,
-            files: []
+            files: [],
+            fontSize: 1.1
         };
     }
 
     componentDidMount() {
+        document.onkeydown = this.handleKeyPress.bind(this);
+
         fetch('/files')
             .then(res => res.json())
             .then((files) => {
@@ -23,6 +27,18 @@ class App extends Component {
                     this.fetchFile(`${decodeURIComponent(file)}`);
                 }
             });
+    }
+
+    handleKeyPress(e) {
+        const event = e;
+        // CTRL +
+        if (event.keyCode === 187 && event.ctrlKey) {
+            this.setState({ fontSize: this.state.fontSize + 0.1 });
+        }
+        // CTRL -
+        if (event.keyCode === 189 && event.ctrlKey) {
+            this.setState({ fontSize: Math.max(this.state.fontSize - 0.1, 0.1) });
+        }
     }
 
     handleSave() {
@@ -94,11 +110,25 @@ class App extends Component {
                             <div className="save" onClick={this.handleSave.bind(this)}>save</div>
                         }
                     </div>
-                    <textarea
-                        className="input"
-                        onChange={this.handleTextEdit.bind(this)}
-                        value={this.state.text}
-                    ></textarea>
+                    <Scrollbars
+                        style={{
+                            flex: 1,
+                            display: 'flex',
+                            overflow: 'hidden'
+                        }}
+                        autohide
+                        autoHideTimeout={1000}
+                        autoHideDuration={200}
+                    >
+                        <textarea
+                            style={{
+                                fontSize: `${Math.round(this.state.fontSize * 10) / 10}em`
+                            }}
+                            className="input"
+                            onChange={this.handleTextEdit.bind(this)}
+                            value={this.state.text}
+                        ></textarea>
+                    </Scrollbars>
                 </div>
             </div>
         );
