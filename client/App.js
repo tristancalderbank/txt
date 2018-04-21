@@ -1,32 +1,55 @@
 import React, { Component } from 'react';
+import Dropbox from 'dropbox';
 import Scrollbars from 'react-custom-scrollbars';
+import Landing from './Landing';
+import config from '../config';
+import utils from './utils';
+import DBX from './dropbox';
+import _ from 'lodash';
 
 class App extends Component {
     constructor(props) {
         super(props);
+
+        const accessToken = utils.getAccessTokenFromUrl();
+        let authUrl;
+
+        if (!accessToken) {
+            this.dbx = new Dropbox.Dropbox({ clientId: config.DBX.clientID });
+            authUrl = this.dbx.getAuthenticationUrl('http://localhost:3000/auth');
+        } else {
+            this.dbx = new DBX(new Dropbox.Dropbox({ accessToken }));
+        }
+
         this.state = {
             name: '',
             text: '',
             saving: false,
             saved: false,
             files: [],
-            fontSize: 1.1
+            fontSize: 1.1,
+            accessToken: null,
+            authUrl,
+            accessToken,
+            selectedFileName: null
         };
     }
 
     componentDidMount() {
         document.onkeydown = this.handleKeyPress.bind(this);
 
-        fetch('/files')
-            .then(res => res.json())
-            .then((files) => {
-                this.setState({ files });
+        if (this.state.accessToken) {
+            this.dbx.getAllFiles()
+                .then((files) => {
+                    const firstFile = Object.keys(files)[0];
 
-                if (document.location.pathname.length > 1) {
-                    const file = document.location.pathname.slice(1);
-                    this.fetchFile(`${decodeURIComponent(file)}`);
-                }
-            });
+                    this.setState({
+                        files
+                    });
+
+                    this.setSelectedFile(firstFile);
+                });
+        }
     }
 
     handleKeyPress(e) {
@@ -43,19 +66,20 @@ class App extends Component {
 
     handleSave() {
         this.setState({ saving: true });
-        return fetch(`/save/${this.state.name}`, {
-            method: 'POST',
-            body: this.state.text
-        })
-            .then(res => res.json())
-            .then((files) => {
-                this.setState({ saving: false, files, saved: true });
-            });
     }
 
     setFileName(name) {
         document.title = name;
-        this.setState({ name });
+
+        const files = this.state.files;
+        const nameWithExt = `${name}.txt`;
+
+        // if name is different, create new file with that name
+        if (!files[nameWithExt]) {
+            files[nameWithExt] = _.cloneDeep(files[this.state.selectedFileName]);
+        }
+
+        this.setState({ selectedFileName: nameWithExt, files });
         window.history.pushState(name, name, `/${name}`);
     }
 
@@ -64,35 +88,46 @@ class App extends Component {
     }
 
     handleTextEdit(e) {
-        const text = e.target.value;
-        this.setState({ text, saved: false });
+        const files = this.state.files;
+        files[this.state.selectedFileName].contents = e.target.value;
+        this.setState({ files, saved: false });
     }
 
-    loadFile(name, content) {
-        this.setFileName(name);
-        this.setState({ text: content, saved: true });
+    setSelectedFile(name) {
+        this.setState({
+            selectedFileName: name
+        });
+
+        this.fileNameInput.value = name.split('.')[0];
     }
 
-    fetchFile(file) {
-        fetch(`/files/${file}`)
-            .then(res => res.text())
-            .then((res) => {
-                this.loadFile(file, res);
-            });
+    getFileNameInputRef(e) {
+        if (e) {
+            this.fileNameInput = e;
+        }
     }
+
 
     render() {
+        if (!this.state.accessToken) {
+            return (<Landing
+                authUrl={this.state.authUrl}
+            />);
+        }
+
+        const fileNames = Object.keys(this.state.files);
+
         return (
             <div className="page">
                 <div className="page-left">
                     <div className="logo">.txt</div>
-                    {this.state.files.map((file, i) => (
+                    {fileNames.map((name, i) => (
                         <div
                             key={i}
                             className="file"
-                            onClick={this.fetchFile.bind(this, file)}
+                            onClick={this.setSelectedFile.bind(this, name)}
                         >
-                            {file}
+                            {name.split('.')[0]}
                         </div>
                     ))}
                 </div>
@@ -101,8 +136,8 @@ class App extends Component {
                         <span className="name-text">name:</span>
                         <input
                             className="name"
-                            onChange={this.handleNameEdit.bind(this)}
-                            value={this.state.name}
+                            onBlur={this.handleNameEdit.bind(this)}
+                            ref={this.getFileNameInputRef.bind(this)}
                         ></input>
                         {this.state.saved ? <div className="saved">Changes saved.</div> : null}
                         {this.state.saving ?
@@ -116,7 +151,6 @@ class App extends Component {
                             display: 'flex',
                             overflow: 'hidden'
                         }}
-                        autohide
                         autoHideTimeout={1000}
                         autoHideDuration={200}
                     >
@@ -126,7 +160,7 @@ class App extends Component {
                             }}
                             className="input"
                             onChange={this.handleTextEdit.bind(this)}
-                            value={this.state.text}
+                            value={this.state.selectedFileName ? this.state.files[this.state.selectedFileName].contents : ''}
                         ></textarea>
                     </Scrollbars>
                 </div>

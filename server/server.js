@@ -52,9 +52,9 @@ app.get('/files', (req, res) => {
     res.json(files);
 });
 
-app.get('/files/:name', (req, res) => {
-    res.sendFile(`${dataDir}/${req.params.name}.txt`);
-});
+// app.get('/files/:name', (req, res) => {
+//     res.sendFile(`${dataDir}/${req.params.name}.txt`);
+// });
 
 app.get('/favicon.ico', (req, res) => {
     console.log('YO');
