@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import Dropbox from 'dropbox';
 import Scrollbars from 'react-custom-scrollbars';
-import Landing from './Landing';
 import config from '../config';
 import utils from './utils';
 import DBX from './dropbox';
+import AutosaveText from './AutosaveText';
+import DropboxButton from './DropboxButton';
 import _ from 'lodash';
 
 class App extends Component {
@@ -62,6 +63,10 @@ class App extends Component {
     }
 
     handleAutosave() {
+        if (!this.state.accessToken) {
+            return;
+        }
+
         const files = this.state.files;
         const fileNames = Object.keys(files);
         const changedFiles = fileNames
@@ -141,12 +146,6 @@ class App extends Component {
     }
 
     render() {
-        if (!this.state.accessToken) {
-            return (<Landing
-                authUrl={this.state.authUrl}
-            />);
-        }
-
         const fileNames = Object.keys(this.state.files);
 
         return (
@@ -171,11 +170,8 @@ class App extends Component {
                             onBlur={this.handleNameEdit.bind(this)}
                             ref={this.getFileNameInputRef.bind(this)}
                         ></input>
-                        {this.state.saved ? <div className="saved">Changes saved.</div> : null}
-                        {this.state.saving ?
-                            <div className="save" >Saving...</div> :
-                            <div className="save" >All changes saved.</div>
-                        }
+                        {!this.state.accessToken ? <DropboxButton authUrl={this.state.authUrl}/> :
+                            <AutosaveText saving={this.state.saving} />}
                     </div>
                     <Scrollbars
                         style={{
