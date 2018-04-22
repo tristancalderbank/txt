@@ -67,17 +67,16 @@ body {
 
 .save {
     margin-left: auto;
-    width: 100px;
-    cursor: pointer;
+    font-weight: 400;
+    margin-right: 20px;
+    font-size: 0.7em;
     height: 55px;
+    color: rgba(3,27,78,.6);
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.save:hover {
-    background:#f3f5f9;
-}
 
 .saved {
     color: rgba(3,27,78,.6);

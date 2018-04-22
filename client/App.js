@@ -22,16 +22,13 @@ class App extends Component {
         }
 
         this.state = {
-            name: '',
-            text: '',
             saving: false,
-            saved: false,
             files: [],
             fontSize: 1.1,
-            accessToken: null,
-            authUrl,
             accessToken,
-            selectedFileName: null
+            authUrl,
+            selectedFileName: null,
+            autosaveTimeoutId: null
         };
     }
 
@@ -64,40 +61,76 @@ class App extends Component {
         }
     }
 
-    handleSave() {
-        this.setState({ saving: true });
+    handleAutosave() {
+        const files = this.state.files;
+        const fileNames = Object.keys(files);
+        const changedFiles = fileNames
+            .map(name => this.state.files[name])
+            .filter(file => file.changed);
+
+
+        return Promise.all(changedFiles.map(file => this.dbx.saveFile(file.path_lower, file.contents)))
+            .then((savedFiles) => {
+                savedFiles.forEach((file) => {
+                    file.changed = false;
+                    files[file.name] = file;
+                });
+
+
+                this.setState({
+                    files,
+                    saving: false
+                });
+            });
     }
 
-    setFileName(name) {
-        document.title = name;
+    handleNameEdit(e) {
+        const name = e.target.value;
+
+        if (name === this.state.selectedFileName) {
+            return;
+        }
 
         const files = this.state.files;
         const nameWithExt = `${name}.txt`;
 
-        // if name is different, create new file with that name
-        if (!files[nameWithExt]) {
-            files[nameWithExt] = _.cloneDeep(files[this.state.selectedFileName]);
-        }
+        // create new file with this name
+        const file = files[this.state.selectedFileName];
+        files[nameWithExt] = this.dbx.getNewFile(nameWithExt, file.contents);
 
         this.setState({ selectedFileName: nameWithExt, files });
-        window.history.pushState(name, name, `/${name}`);
-    }
+        this.setSelectedFile(nameWithExt);
 
-    handleNameEdit(e) {
-        this.setFileName(e.target.value);
+        this.triggerAutosave();
     }
 
     handleTextEdit(e) {
         const files = this.state.files;
-        files[this.state.selectedFileName].contents = e.target.value;
-        this.setState({ files, saved: false });
+        const file = files[this.state.selectedFileName];
+        file.contents = e.target.value;
+        file.changed = true;
+        this.setState({ files });
+
+
+        this.triggerAutosave();
+    }
+
+    triggerAutosave() {
+        if (this.state.autosaveTimeoutId) {
+            clearTimeout(this.state.autosaveTimeoutId);
+        }
+        this.setState({
+            autosaveTimeoutId: setTimeout(this.handleAutosave.bind(this), config.AUTOSAVE_TIMEOUT),
+            saving: true
+        });
     }
 
     setSelectedFile(name) {
         this.setState({
             selectedFileName: name
         });
-
+        window.history.pushState(name, name, `/${name}`);
+        document.title = name;
         this.fileNameInput.value = name.split('.')[0];
     }
 
@@ -106,7 +139,6 @@ class App extends Component {
             this.fileNameInput = e;
         }
     }
-
 
     render() {
         if (!this.state.accessToken) {
@@ -120,7 +152,7 @@ class App extends Component {
         return (
             <div className="page">
                 <div className="page-left">
-                    <div className="logo">.txt</div>
+                    <div className="logo">Inflow</div>
                     {fileNames.map((name, i) => (
                         <div
                             key={i}
@@ -141,8 +173,8 @@ class App extends Component {
                         ></input>
                         {this.state.saved ? <div className="saved">Changes saved.</div> : null}
                         {this.state.saving ?
-                            <div className="save" >saving</div> :
-                            <div className="save" onClick={this.handleSave.bind(this)}>save</div>
+                            <div className="save" >Saving...</div> :
+                            <div className="save" >All changes saved.</div>
                         }
                     </div>
                     <Scrollbars
