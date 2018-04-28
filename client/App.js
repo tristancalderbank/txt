@@ -7,12 +7,15 @@ import DBX from './dropbox';
 import AutosaveText from './AutosaveText';
 import DropboxButton from './DropboxButton';
 import _ from 'lodash';
+import Cookies from 'js-cookie';
 
 class App extends Component {
     constructor(props) {
         super(props);
 
-        const accessToken = utils.getAccessTokenFromUrl();
+        const accessToken = utils.getAccessTokenFromUrl() || Cookies.get('accessToken');
+        Cookies.set('accessToken', accessToken);
+
         let authUrl;
 
         if (!accessToken) {
@@ -29,7 +32,22 @@ class App extends Component {
             accessToken,
             authUrl,
             selectedFileName: null,
-            autosaveTimeoutId: null
+            autosaveTimeoutId: null,
+            zenMode: false,
+            themes: {
+                default: {
+                    colorPrimary: '#3076f8',
+                    colorTextMajor: 'black',
+                    colorTextMinor: 'rgba(3,27,78,.6)',
+                    colorBackground: 'white'
+                },
+                dark: {
+                    colorPrimary: '#7289da',
+                    colorTextMajor: 'hsla(0,0%,100%,.7)',
+                    colorTextMinor: '#dcddde',
+                    colorBackground: 'hsl(218, 7%, 23%)'
+                }
+            }
         };
     }
 
@@ -59,6 +77,12 @@ class App extends Component {
         // CTRL -
         if (event.keyCode === 189 && event.ctrlKey) {
             this.setState({ fontSize: Math.max(this.state.fontSize - 0.1, 0.1) });
+        }
+        // ESC
+        if (event.keyCode === 27) {
+            this.setState({
+                zenMode: !this.state.zenMode
+            });
         }
     }
 
@@ -91,13 +115,13 @@ class App extends Component {
 
     handleNameEdit(e) {
         const name = e.target.value;
+        const nameWithExt = `${name}.txt`;
 
-        if (name === this.state.selectedFileName) {
+        if (nameWithExt === this.state.selectedFileName) {
             return;
         }
 
         const files = this.state.files;
-        const nameWithExt = `${name}.txt`;
 
         // create new file with this name
         const file = files[this.state.selectedFileName];
@@ -146,25 +170,31 @@ class App extends Component {
     }
 
     render() {
-        const fileNames = Object.keys(this.state.files);
+        const files = Object.keys(this.state.files).reduce((acc, name) => {
+            acc.push(this.state.files[name]);
+            return acc;
+        }, []);
+
+        const sortedFiles = files.sort(utils.sortByAlph.bind(this, 'client_modified')).reverse();
+
+        const theme = this.state.themes.dark;
 
         return (
-            <div className="page">
-                <div className="page-left">
-                    <div className="logo">Inflow</div>
-                    {fileNames.map((name, i) => (
+            <div style={{ color: theme.colorTextMajor, background: theme.colorBackground }} className="page">
+                {this.state.zenMode ? null : <div className="page-left" style={{ color: theme.colorTextMinor }}>
+                    {/* <div className="logo" style={{ color: theme.colorPrimary }}>Inflow</div> */}
+                    {sortedFiles.map((file, i) => (
                         <div
                             key={i}
                             className="file"
-                            onClick={this.setSelectedFile.bind(this, name)}
+                            onClick={this.setSelectedFile.bind(this, file.name)}
                         >
-                            {name.split('.')[0]}
+                            {file.name.split('.')[0]}
                         </div>
                     ))}
-                </div>
+                </div>}
                 <div className="page-right">
-                    <div className="toolbar">
-                        <span className="name-text">name:</span>
+                    {this.state.zenMode ? null : <div className="toolbar" style={{ color: theme.colorPrimary }}>
                         <input
                             className="name"
                             onBlur={this.handleNameEdit.bind(this)}
@@ -172,7 +202,7 @@ class App extends Component {
                         ></input>
                         {!this.state.accessToken ? <DropboxButton authUrl={this.state.authUrl}/> :
                             <AutosaveText saving={this.state.saving} />}
-                    </div>
+                    </div>}
                     <Scrollbars
                         style={{
                             flex: 1,

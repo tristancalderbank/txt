@@ -47,7 +47,12 @@ class DBX {
             autorename: false,
             mute: true,
             mode
-        });
+        })
+            .then((file) => {
+                file.contents = contents;
+                return file;
+            })
+        ;
     }
 }
 
