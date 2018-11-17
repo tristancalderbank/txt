@@ -32,6 +32,7 @@ body {
     flex-flow: column;
     margin-top: 10px;
     width: 300px;
+    font-size: 0.9em;
 }
 
 .logo {
@@ -112,7 +113,7 @@ body {
     height: 40px;
     display: flex;
     align-items: center;
-    padding-left: 30px;
+    padding-left: 20px;
 }
 
 .file:hover {

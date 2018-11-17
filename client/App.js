@@ -28,7 +28,7 @@ class App extends Component {
         this.state = {
             saving: false,
             files: [],
-            fontSize: 1.1,
+            fontSize: 0.9,
             accessToken,
             authUrl,
             selectedFileName: null,
